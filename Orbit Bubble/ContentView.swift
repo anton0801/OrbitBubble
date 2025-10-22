@@ -1678,7 +1678,7 @@ class LaunchViewController: ObservableObject {
             let url = URL(string: "https://gcdsdk.appsflyer.com/install_data/v4.0/id6754334550")!
             var components = URLComponents(url: url, resolvingAgainstBaseURL: true)!
             let queryItems: [URLQueryItem] = [
-                URLQueryItem(name: "devkey", value: "3ERPRZB3HpWKFpHixe8pQc"),
+                URLQueryItem(name: "devkey", value: "foNyV7NauVreZX94tjjgeb"),
                 URLQueryItem(name: "device_id", value: AppsFlyerLib.shared().getAppsFlyerUID()),
             ]
             components.queryItems = components.queryItems.map { $0 + queryItems } ?? queryItems

@@ -25,7 +25,7 @@ class ApplicationDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDeleg
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
         
-        AppsFlyerLib.shared().appsFlyerDevKey = "t7wmt7Ap8ZPiRfgTXoMo67"
+        AppsFlyerLib.shared().appsFlyerDevKey = "foNyV7NauVreZX94tjjgeb"
         AppsFlyerLib.shared().appleAppID = "6754334550"
         AppsFlyerLib.shared().delegate = self
         AppsFlyerLib.shared().start()
