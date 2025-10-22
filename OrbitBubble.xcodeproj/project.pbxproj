@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8F77CBF82EA94A3D00D4FB4F /* AppsFlyerLib in Frameworks */ = {isa = PBXBuildFile; productRef = 8F77CBF72EA94A3D00D4FB4F /* AppsFlyerLib */; };
+		8F77CBFB2EA94A6800D4FB4F /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8F77CBFA2EA94A6800D4FB4F /* FirebaseAnalytics */; };
+		8F77CBFD2EA94A6800D4FB4F /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 8F77CBFC2EA94A6800D4FB4F /* FirebaseMessaging */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		8F77CB6E2EA9155E00D4FB4F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +58,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8F77CBFD2EA94A6800D4FB4F /* FirebaseMessaging in Frameworks */,
+				8F77CBFB2EA94A6800D4FB4F /* FirebaseAnalytics in Frameworks */,
+				8F77CBF82EA94A3D00D4FB4F /* AppsFlyerLib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +121,9 @@
 			);
 			name = OrbitBubble;
 			packageProductDependencies = (
+				8F77CBF72EA94A3D00D4FB4F /* AppsFlyerLib */,
+				8F77CBFA2EA94A6800D4FB4F /* FirebaseAnalytics */,
+				8F77CBFC2EA94A6800D4FB4F /* FirebaseMessaging */,
 			);
 			productName = "Orbit Bubble";
 			productReference = 8F77CB5F2EA9155C00D4FB4F /* OrbitBubble.app */;
@@ -195,6 +207,10 @@
 			);
 			mainGroup = 8F77CB562EA9155C00D4FB4F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8F77CBF62EA94A3D00D4FB4F /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */,
+				8F77CBF92EA94A6800D4FB4F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8F77CB602EA9155C00D4FB4F /* Products */;
 			projectDirPath = "";
@@ -587,6 +603,43 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8F77CBF62EA94A3D00D4FB4F /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AppsFlyerSDK/AppsFlyerFramework";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.17.7;
+			};
+		};
+		8F77CBF92EA94A6800D4FB4F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8F77CBF72EA94A3D00D4FB4F /* AppsFlyerLib */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F77CBF62EA94A3D00D4FB4F /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */;
+			productName = AppsFlyerLib;
+		};
+		8F77CBFA2EA94A6800D4FB4F /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F77CBF92EA94A6800D4FB4F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		8F77CBFC2EA94A6800D4FB4F /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F77CBF92EA94A6800D4FB4F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8F77CB572EA9155C00D4FB4F /* Project object */;
 }

