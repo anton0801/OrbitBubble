@@ -10,6 +10,8 @@
 		8F77CBF82EA94A3D00D4FB4F /* AppsFlyerLib in Frameworks */ = {isa = PBXBuildFile; productRef = 8F77CBF72EA94A3D00D4FB4F /* AppsFlyerLib */; };
 		8F77CBFB2EA94A6800D4FB4F /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8F77CBFA2EA94A6800D4FB4F /* FirebaseAnalytics */; };
 		8F77CBFD2EA94A6800D4FB4F /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 8F77CBFC2EA94A6800D4FB4F /* FirebaseMessaging */; };
+		8F77CC092EA94C8000D4FB4F /* NotificationServiceExtensionApp.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8F77CC022EA94C8000D4FB4F /* NotificationServiceExtensionApp.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8F77CC112EA94C9600D4FB4F /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 8F77CC102EA94C9600D4FB4F /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -27,13 +29,45 @@
 			remoteGlobalIDString = 8F77CB5E2EA9155C00D4FB4F;
 			remoteInfo = "Orbit Bubble";
 		};
+		8F77CC072EA94C8000D4FB4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8F77CB572EA9155C00D4FB4F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8F77CC012EA94C8000D4FB4F;
+			remoteInfo = NotificationServiceExtensionApp;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8F77CC0E2EA94C8000D4FB4F /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8F77CC092EA94C8000D4FB4F /* NotificationServiceExtensionApp.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		8F77CB5F2EA9155C00D4FB4F /* OrbitBubble.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OrbitBubble.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F77CB6D2EA9155E00D4FB4F /* OrbitBubbleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrbitBubbleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F77CB772EA9155E00D4FB4F /* OrbitBubbleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrbitBubbleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8F77CC022EA94C8000D4FB4F /* NotificationServiceExtensionApp.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtensionApp.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8F77CC0A2EA94C8000D4FB4F /* Exceptions for "NotificationServiceExtensionApp" folder in "NotificationServiceExtensionApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8F77CC012EA94C8000D4FB4F /* NotificationServiceExtensionApp */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8F77CB612EA9155C00D4FB4F /* Orbit Bubble */ = {
@@ -49,6 +83,14 @@
 		8F77CB7A2EA9155E00D4FB4F /* Orbit BubbleUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Orbit BubbleUITests";
+			sourceTree = "<group>";
+		};
+		8F77CC032EA94C8000D4FB4F /* NotificationServiceExtensionApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8F77CC0A2EA94C8000D4FB4F /* Exceptions for "NotificationServiceExtensionApp" folder in "NotificationServiceExtensionApp" target */,
+			);
+			path = NotificationServiceExtensionApp;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -78,6 +120,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8F77CBFF2EA94C8000D4FB4F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8F77CC112EA94C9600D4FB4F /* FirebaseMessaging in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -87,6 +137,8 @@
 				8F77CB612EA9155C00D4FB4F /* Orbit Bubble */,
 				8F77CB702EA9155E00D4FB4F /* Orbit BubbleTests */,
 				8F77CB7A2EA9155E00D4FB4F /* Orbit BubbleUITests */,
+				8F77CC032EA94C8000D4FB4F /* NotificationServiceExtensionApp */,
+				8F77CC0F2EA94C9600D4FB4F /* Frameworks */,
 				8F77CB602EA9155C00D4FB4F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -97,8 +149,16 @@
 				8F77CB5F2EA9155C00D4FB4F /* OrbitBubble.app */,
 				8F77CB6D2EA9155E00D4FB4F /* OrbitBubbleTests.xctest */,
 				8F77CB772EA9155E00D4FB4F /* OrbitBubbleUITests.xctest */,
+				8F77CC022EA94C8000D4FB4F /* NotificationServiceExtensionApp.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8F77CC0F2EA94C9600D4FB4F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -111,10 +171,12 @@
 				8F77CB5B2EA9155C00D4FB4F /* Sources */,
 				8F77CB5C2EA9155C00D4FB4F /* Frameworks */,
 				8F77CB5D2EA9155C00D4FB4F /* Resources */,
+				8F77CC0E2EA94C8000D4FB4F /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				8F77CC082EA94C8000D4FB4F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				8F77CB612EA9155C00D4FB4F /* Orbit Bubble */,
@@ -175,6 +237,29 @@
 			productReference = 8F77CB772EA9155E00D4FB4F /* OrbitBubbleUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		8F77CC012EA94C8000D4FB4F /* NotificationServiceExtensionApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8F77CC0B2EA94C8000D4FB4F /* Build configuration list for PBXNativeTarget "NotificationServiceExtensionApp" */;
+			buildPhases = (
+				8F77CBFE2EA94C8000D4FB4F /* Sources */,
+				8F77CBFF2EA94C8000D4FB4F /* Frameworks */,
+				8F77CC002EA94C8000D4FB4F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8F77CC032EA94C8000D4FB4F /* NotificationServiceExtensionApp */,
+			);
+			name = NotificationServiceExtensionApp;
+			packageProductDependencies = (
+				8F77CC102EA94C9600D4FB4F /* FirebaseMessaging */,
+			);
+			productName = NotificationServiceExtensionApp;
+			productReference = 8F77CC022EA94C8000D4FB4F /* NotificationServiceExtensionApp.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -195,6 +280,9 @@
 					8F77CB762EA9155E00D4FB4F = {
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = 8F77CB5E2EA9155C00D4FB4F;
+					};
+					8F77CC012EA94C8000D4FB4F = {
+						CreatedOnToolsVersion = 16.4;
 					};
 				};
 			};
@@ -219,6 +307,7 @@
 				8F77CB5E2EA9155C00D4FB4F /* OrbitBubble */,
 				8F77CB6C2EA9155E00D4FB4F /* OrbitBubbleTests */,
 				8F77CB762EA9155E00D4FB4F /* OrbitBubbleUITests */,
+				8F77CC012EA94C8000D4FB4F /* NotificationServiceExtensionApp */,
 			);
 		};
 /* End PBXProject section */
@@ -239,6 +328,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8F77CB752EA9155E00D4FB4F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8F77CC002EA94C8000D4FB4F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -269,6 +365,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8F77CBFE2EA94C8000D4FB4F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -281,6 +384,11 @@
 			isa = PBXTargetDependency;
 			target = 8F77CB5E2EA9155C00D4FB4F /* OrbitBubble */;
 			targetProxy = 8F77CB782EA9155E00D4FB4F /* PBXContainerItemProxy */;
+		};
+		8F77CC082EA94C8000D4FB4F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8F77CC012EA94C8000D4FB4F /* NotificationServiceExtensionApp */;
+			targetProxy = 8F77CC072EA94C8000D4FB4F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -563,6 +671,67 @@
 			};
 			name = Release;
 		};
+		8F77CC0C2EA94C8000D4FB4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationServiceExtensionApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationServiceExtensionApp;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.apporbitictasks.OrbitBubble.NotificationServiceExtensionApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		8F77CC0D2EA94C8000D4FB4F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationServiceExtensionApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationServiceExtensionApp;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.apporbitictasks.OrbitBubble.NotificationServiceExtensionApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -602,6 +771,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		8F77CC0B2EA94C8000D4FB4F /* Build configuration list for PBXNativeTarget "NotificationServiceExtensionApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8F77CC0C2EA94C8000D4FB4F /* Debug */,
+				8F77CC0D2EA94C8000D4FB4F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -635,6 +813,11 @@
 			productName = FirebaseAnalytics;
 		};
 		8F77CBFC2EA94A6800D4FB4F /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F77CBF92EA94A6800D4FB4F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		8F77CC102EA94C9600D4FB4F /* FirebaseMessaging */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8F77CBF92EA94A6800D4FB4F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
