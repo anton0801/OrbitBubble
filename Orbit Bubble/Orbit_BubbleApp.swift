@@ -60,7 +60,6 @@ class ApplicationDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDeleg
         }
     }
     
-    // AppsFlyer callbacks
     func onConversionDataSuccess(_ data: [AnyHashable: Any]) {
         attribData = data
         NotificationCenter.default.post(name: Notification.Name("ConversionDataReceived"), object: nil, userInfo: ["conversionData": attribData])

@@ -1248,7 +1248,7 @@ struct StatCard: View {
 }
 
 #Preview {
-    ContentView()
+    LaunchView()
 }
 
 
@@ -1584,7 +1584,6 @@ class LaunchViewController: ObservableObject {
     
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(processAttribData(_:)), name: NSNotification.Name("ConversionDataReceived"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(processAttribFailure(_:)), name: NSNotification.Name("ConversionDataFailed"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(processTokenUpdate(_:)), name: NSNotification.Name("FCMTokenUpdated"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(reattemptConfig), name: NSNotification.Name("RetryConfig"), object: nil)
         
@@ -1640,8 +1639,6 @@ class LaunchViewController: ObservableObject {
     }
     
     private func handleAttribInfo() {
-        // guard !attribInfo.isEmpty else { return }
-        
         if UserDefaults.standard.string(forKey: "app_mode") == "Funtik" {
             DispatchQueue.main.async {
                 self.activeView = .fallback
@@ -1985,6 +1982,7 @@ struct PushAceptattionView: View {
                             .resizable()
                             .frame(height: 60)
                     }
+                    .frame(maxWidth: 350)
                     .padding(.horizontal, 32)
                     .padding(.top, 24)
                     
@@ -1999,11 +1997,12 @@ struct PushAceptattionView: View {
                                 .multilineTextAlignment(.center)
                         }
                     }
+                    .frame(maxWidth: 320)
                     .frame(height: 45)
                     .padding(.horizontal, 48)
                     
                     Spacer()
-                        .frame(height: isLandscape ? 50 : 70)
+                        .frame(height: isLandscape ? 10 : 70)
                 }
                 .padding(.horizontal, isLandscape ? 20 : 0)
             }

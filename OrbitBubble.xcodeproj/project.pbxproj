@@ -57,6 +57,7 @@
 		8F77CB6D2EA9155E00D4FB4F /* OrbitBubbleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrbitBubbleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F77CB772EA9155E00D4FB4F /* OrbitBubbleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrbitBubbleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F77CC022EA94C8000D4FB4F /* NotificationServiceExtensionApp.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtensionApp.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8F77CCBC2EAA4B5300D4FB4F /* OrbitBubble-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "OrbitBubble-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -134,6 +135,7 @@
 		8F77CB562EA9155C00D4FB4F = {
 			isa = PBXGroup;
 			children = (
+				8F77CCBC2EAA4B5300D4FB4F /* OrbitBubble-Info.plist */,
 				8F77CB612EA9155C00D4FB4F /* Orbit Bubble */,
 				8F77CB702EA9155E00D4FB4F /* Orbit BubbleTests */,
 				8F77CB7A2EA9155E00D4FB4F /* Orbit BubbleUITests */,
@@ -514,10 +516,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Orbit Bubble/Orbit_Bubble.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "OrbitBubble-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Orbit Bubble: Planet Task";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Allow to use your camera.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "We use your device’s advertising identifier to deliver a more personalized experience, show relevant content, and improve app performance. Your data is used securely within the app and never shared with third parties for tracking outside this application.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -553,10 +558,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Orbit Bubble/Orbit_Bubble.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "OrbitBubble-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Orbit Bubble: Planet Task";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Allow to use your camera.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "We use your device’s advertising identifier to deliver a more personalized experience, show relevant content, and improve app performance. Your data is used securely within the app and never shared with third parties for tracking outside this application.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
